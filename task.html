@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Télécharger un Badge</title>
+  <style>
+    /* Styles pour l'affichage du badge */
+    #badgeContainer {
+      width: 512px;
+      height: 512px;
+      border-radius: 50%;
+      overflow: hidden;
+    }
+    #badgeImage {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <h1>Téléchargez Votre Badge</h1>
+  <input type="file" id="badgeInput" accept="image/png" />
+  <br />
+  <div id="badgeContainer">
+    <img id="badgeImage" src="#" alt="Badge Téléchargé">
+  </div>
+
+  <script>
+    function validerBadge(fichier) {
+      const img = new Image();
+      img.onload = function() {
+        if (img.width === 512 && img.height === 512) {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0, img.width, img.height);
+          const imageData = ctx.getImageData(0, 0, img.width, img.height);
+          const data = imageData.data;
+          let estHeureux = true;
+          let pixelsNonTransparentsDansCercle = 0;
+          for (let i = 0; i < data.length; i += 4) {
+            const alpha = data[i + 3];
+            if (alpha !== 0) {
+              const x = (i / 4) % img.width;
+              const y = Math.floor((i / 4) / img.width);
+              const distanceAuCentre = Math.sqrt((x - img.width / 2) ** 2 + (y - img.height / 2) ** 2);
+              if (distanceAuCentre <= img.width / 2) {
+                pixelsNonTransparentsDansCercle++;
+                const [r, g, b] = [data[i], data[i + 1], data[i + 2]];
+                // Vérifier si les couleurs sont "heureuses"
+                if (r < 100 || g < 100 || b < 100) {
+                  estHeureux = false;
+                  break;
+                }
+              }
+            }
+          }
+          if (pixelsNonTransparentsDansCercle === 0 || !estHeureux) {
+            alert('Badge invalide. Veuillez télécharger un badge avec des pixels non transparents dans un cercle et des couleurs joyeuses.');
+          }
+        } else {
+          alert('Dimensions de badge non valides. Veuillez télécharger un badge avec des dimensions de 512x512.');
+        }
+      };
+      img.src = URL.createObjectURL(fichier);
+    }
+
+    document.getElementById('badgeInput').addEventListener('change', function(event) {
+      const fichier = event.target.files[0];
+      if (fichier && fichier.type === 'image/png') {
+        validerBadge(fichier);
+        document.getElementById('badgeImage').src = URL.createObjectURL(fichier);
+      } else {
+        alert('Veuillez télécharger une image au format PNG.');
+      }
+    });
+  </script>
+</body>
+</html>
